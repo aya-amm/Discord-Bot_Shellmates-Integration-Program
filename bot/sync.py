@@ -1,11 +1,6 @@
-"""Pure role-comparison logic (no Discord needed). Owner: issue #3."""
 
+def compute_changes( current: set[str], wanted: set[str], managed: set[str] ) :
 
-def compute_changes(
-    current: set[str], wanted: set[str], managed: set[str]
-) -> tuple[set[str], set[str]]:
-    """Return (to_add, to_remove).
-
-    Only roles in `managed` may be added or removed; all others are untouched.
-    """
-    raise NotImplementedError
+    to_add =(wanted & managed) -current
+    to_remove=( current & managed ) - wanted
+    return (to_add , to_remove)

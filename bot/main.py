@@ -31,7 +31,7 @@ class HRBot(commands.Bot):
 
 
 def main() -> None:
-    config.validate()
+    #config.validate()
     HRBot().run(config.DISCORD_TOKEN)
 
 
