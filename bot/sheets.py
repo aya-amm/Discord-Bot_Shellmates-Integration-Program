@@ -29,7 +29,11 @@ def load_members():
         raise SheetsReadError("Missing required columns.")
 
     except Exception as exc:
-        raise SheetsReadError( "Unable to access Google Sheets.") from exc
+        import logging
+        logging.getLogger("hr-bot.sheets").error(
+            "Google Sheets error: %s: %s", type(exc).__name__, exc
+        )
+        raise SheetsReadError("Unable to access Google Sheets.") from exc
 
     grouped = {}
     errors = []
