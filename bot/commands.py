@@ -1,4 +1,4 @@
-"""Slash commands. Issue #5 adds /sync-roles here; #9, #11 add more."""
+"""/sync-roles and /preview-sync"""
 import asyncio
 import io
 import logging
@@ -35,8 +35,18 @@ class HRCommands(commands.Cog):
     async def sync_roles(self, interaction: discord.Interaction, dry_run: bool = False) -> None:
         await self._run_sync(interaction, dry_run=dry_run)
 
+    @app_commands.command(
+        name="preview-sync",
+        description="Preview the role changes /sync-roles would make, without applying anything",
+    )
+    @app_commands.guild_only()
+    @hr_only()
+    async def preview_sync(self, interaction: discord.Interaction) -> None:
+        """Shortcut for /sync-roles with dry_run=True."""
+        await self._run_sync(interaction, dry_run=True)
+
     async def _run_sync(self, interaction: discord.Interaction, *, dry_run: bool) -> None:
-        """Shared by /sync-roles (and later /preview-sync, issue #9)."""
+        """Shared by /sync-roles and /preview-sync."""
         if self._sync_lock.locked():
             await interaction.response.send_message(
                 "A synchronization is already running. Please wait for it to finish.",

@@ -1,15 +1,17 @@
-"""Formatting of the /sync-roles result for Discord. Issue #5 (summary, section 3.3).
-
-Pure functions (no Discord objects) so they are easy to test.
-"""
 from __future__ import annotations
 
 from bot.discord_ops import SyncReport
 
-# Discord messages are limited to 2000 characters; stay safely below.
+# Limitations
 MAX_MESSAGE_LENGTH = 1900
-# How many errors/warnings are listed inline before the rest goes in the attached file.
 MAX_INLINE_ISSUES = 10
+MAX_INLINE_CHANGES = 10
+
+
+def _describe(change) -> str:
+    """e.g. 'member1: +Developer -Designer'."""
+    parts = [f"+{name}" for name in change.added] + [f"-{name}" for name in change.removed]
+    return f"{change.username}: {' '.join(parts)}"
 
 
 def _summary_lines(report: SyncReport, duration: float) -> list[str]:
@@ -32,22 +34,31 @@ def _summary_lines(report: SyncReport, duration: float) -> list[str]:
 
 
 def build_response(report: SyncReport, duration: float) -> tuple[str, str | None]:
-    """Return ``(message, details)``.
-
-    ``message`` always fits in one Discord message. ``details`` is the full
-    report as text when something had to be cut (to attach as a .txt file),
-    otherwise ``None``.
-    """
+    # Return message, details 
     lines = _summary_lines(report, duration)
     issues = [f"- {e}" for e in report.errors] + [f"- (warning) {w}" for w in report.warnings]
 
     truncated = len(issues) > MAX_INLINE_ISSUES
+
+    # A preview must show WHO would get WHAT so el HR can verify before applying.
+    if report.dry_run and report.changes:
+        lines.append("")
+        lines.append("**Planned changes:**")
+        lines.extend(f"- {_describe(c)}" for c in report.changes[:MAX_INLINE_CHANGES])
+        if len(report.changes) > MAX_INLINE_CHANGES:
+            truncated = True
+            lines.append(f"...and {len(report.changes) - MAX_INLINE_CHANGES} more member(s) (see attached file).")
+
     if issues:
         lines.append("")
         lines.append("**Errors and warnings:**")
         lines.extend(issues[:MAX_INLINE_ISSUES])
-        if truncated:
+        if len(issues) > MAX_INLINE_ISSUES:
             lines.append(f"...and {len(issues) - MAX_INLINE_ISSUES} more (see attached file).")
+
+    if report.dry_run and report.changes:
+        lines.append("")
+        lines.append("Looks right? Run `/sync-roles` to apply these changes.")
 
     message = "\n".join(lines)
     if len(message) > MAX_MESSAGE_LENGTH:

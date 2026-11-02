@@ -1,4 +1,3 @@
-"""Bot startup. Run from the project root with:  python -m bot.main"""
 import logging
 
 import discord
@@ -9,8 +8,7 @@ from bot import config
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("hr-bot")
 
-# Server Members Intent: required to see the full member list.
-# It must ALSO be enabled in the Discord Developer Portal.
+# setup intents
 intents = discord.Intents.default()
 intents.members = True
 
@@ -21,7 +19,7 @@ class HRBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         await self.load_extension("bot.commands")
-        # Sync slash commands to our guild only (appears instantly, unlike global sync).
+        # Sync commands
         guild = discord.Object(id=config.GUILD_ID)
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
@@ -31,7 +29,6 @@ class HRBot(commands.Bot):
 
 
 def main() -> None:
-    #config.validate()
     HRBot().run(config.DISCORD_TOKEN)
 
 

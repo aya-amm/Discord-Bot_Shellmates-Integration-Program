@@ -1,4 +1,3 @@
-"""Tests for bot.discord_ops (issue #4), using small fakes instead of a real Discord server."""
 import asyncio
 from types import SimpleNamespace
 
@@ -13,7 +12,6 @@ from bot.discord_ops import (
 )
 
 
-# ----------------------------- fakes ---------------------------------------
 class FakeRole:
     def __init__(self, name, position=1, managed=False, default=False):
         self.name = name
@@ -30,7 +28,7 @@ class FakeMember:
         self.name = name
         self.roles = [FakeRole("@everyone", 0, default=True), *roles]
         self.fail_with = fail_with
-        self.calls = []  # ("add"/"remove", [role names])
+        self.calls = []  
 
     async def add_roles(self, *roles, reason=None):
         self.calls.append(("add", [r.name for r in roles]))
@@ -78,7 +76,7 @@ ADMIN = FakeRole("Admin", 5)
 MANAGED = ["Developer", "Designer", "HR"]
 
 
-# ----------------------------- member matching ------------------------------
+# member matching 
 def test_find_member_ignores_case_spaces_and_at_sign():
     alice = FakeMember("Alice_99")
     index = build_member_index(make_guild([alice], []))
@@ -93,7 +91,7 @@ def test_find_member_unknown_or_empty_returns_none():
     assert find_member(index, "   @ ") is None
 
 
-# ----------------------------- role changes ---------------------------------
+#  role changes 
 def test_matching_member_gets_correct_changes():
     m = FakeMember("member1", [DES])
     guild = make_guild([m], [DEV, DES, HR])
@@ -106,9 +104,8 @@ def test_matching_member_gets_correct_changes():
 def test_unmanaged_roles_are_never_modified():
     m = FakeMember("member1", [ADMIN, DEV])
     guild = make_guild([m], [DEV, DES, HR, ADMIN])
-    # The sheet asks for Admin (unmanaged) and no Developer.
     report = run(sync_members(guild, [{"username": "member1", "roles": ["Admin"]}], MANAGED, delay=0))
-    assert m.role_names() == {"Admin"}  # Admin kept, not re-added; Developer removed
+    assert m.role_names() == {"Admin"}  # Admin kept
     assert all("Admin" not in names for _, names in m.calls)
     assert any("Admin" in w for w in report.warnings)
 
@@ -135,7 +132,7 @@ def test_already_up_to_date_counts_as_unchanged():
     assert (report.unchanged, report.roles_added, report.roles_removed) == (1, 0, 0)
 
 
-# ----------------------------- missing members / roles ----------------------
+#  missing members / roles 
 def test_missing_member_is_skipped_and_reported_without_stopping_sync():
     m = FakeMember("member2")
     guild = make_guild([m], [DEV, DES, HR])
@@ -165,7 +162,7 @@ def test_managed_role_missing_on_server_is_reported():
     assert any("'HR'" in e for e in report.errors)
 
 
-# ----------------------------- permissions / hierarchy ----------------------
+#  permissions
 def test_role_above_bot_reports_error_and_makes_no_api_call():
     m = FakeMember("member1")
     guild = make_guild([m], [DEV, DES, HR], bot=make_bot(top_position=3))  # Designer(3) not allowed
@@ -188,7 +185,7 @@ def test_missing_manage_roles_permission_aborts_with_no_changes():
     assert any("Manage Roles" in e for e in report.errors)
 
 
-# ----------------------------- Discord API errors ---------------------------
+# Discord API errors 
 def test_forbidden_error_on_one_member_does_not_stop_the_sync():
     bad = FakeMember("bad", fail_with=http_error(discord.Forbidden))
     good = FakeMember("good")
@@ -223,7 +220,7 @@ def test_failed_add_still_attempts_removal():
     assert (report.roles_added, report.roles_removed) == (0, 1)
 
 
-# ----------------------------- dry run --------------------------------------
+#  dry run 
 def test_dry_run_reports_changes_but_applies_nothing():
     m = FakeMember("member1", [DES])
     guild = make_guild([m], [DEV, DES, HR])
@@ -239,4 +236,4 @@ def test_apply_role_changes_dry_run_still_checks_hierarchy():
     m = FakeMember("member1")
     bot = make_bot(top_position=2)
     added, removed, errors = run(apply_role_changes(m, [DEV], [], bot, reason="t", dry_run=True))
-    assert added == [] and errors  # Developer (2) is not below the bot's top role (2)
+    assert added == [] and errors 

@@ -1,4 +1,3 @@
-"""Tests for bot.permissions (issue #6)."""
 import asyncio
 from types import SimpleNamespace
 
@@ -11,7 +10,7 @@ from bot.permissions import has_authorized_role, is_authorized
 
 
 class FakeMember(discord.Member):
-    """A real discord.Member subclass (so isinstance checks pass) with settable roles/permissions."""
+    """A real discord.Member subclass with settable roles/permissions """
 
     def __init__(self, role_names, admin):
         self._roles = [SimpleNamespace(name=n) for n in ("@everyone", *role_names)]

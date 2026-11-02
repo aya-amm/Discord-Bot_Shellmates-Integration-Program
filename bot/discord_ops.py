@@ -1,10 +1,3 @@
-"""Discord-side operations: match sheet members to server members and apply role changes.
-
-Issue #4. The pure add/remove computation lives in ``bot.sync``; this module
-talks to Discord. ``sync_members`` is the entry point used by the
-``/sync-roles`` command (issue #5) and returns a ``SyncReport`` that the
-command can turn into the summary message.
-"""
 from __future__ import annotations
 
 import asyncio
@@ -19,13 +12,13 @@ from bot.sync import compute_changes
 log = logging.getLogger("hr-bot.discord_ops")
 
 # Small pause after each member that needed API calls, to stay well below
-# Discord's rate limits. (discord.py also waits and retries on HTTP 429.)
+# Discord's rate limits 
 DEFAULT_DELAY = 0.5
 
 
 @dataclass
 class RoleChange:
-    """The role changes applied (or planned, in dry-run) for one member."""
+    """The role changes applied or planned, in dry-run for one member"""
 
     username: str
     added: list[str] = field(default_factory=list)
@@ -34,28 +27,22 @@ class RoleChange:
 
 @dataclass
 class SyncReport:
-    """Everything the /sync-roles summary needs."""
+    """Sommaire ta3 synchronization, li y'affichih /sync-roles """
 
-    processed: int = 0  # sheet members handled (found in the server)
+    processed: int = 0  
     roles_added: int = 0
     roles_removed: int = 0
-    unchanged: int = 0  # found, but already up to date
-    skipped: int = 0  # not found in the server
+    unchanged: int = 0  
+    skipped: int = 0  
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     changes: list[RoleChange] = field(default_factory=list)
     dry_run: bool = False
 
 
-# --------------------------------------------------------------------------- #
-# Lookups
-# --------------------------------------------------------------------------- #
-def build_member_index(guild: discord.Guild) -> dict[str, discord.Member]:
-    """Map normalized account usernames to members.
 
-    Uses ``member.name`` (the unique username), NOT the display name or
-    server nickname. Requires the Server Members Intent.
-    """
+def build_member_index(guild: discord.Guild) -> dict[str, discord.Member]:
+    """Uses 'member.name' aka ID, Requires the Server Members Intent """
     index: dict[str, discord.Member] = {}
     for member in guild.members:
         index.setdefault(normalize_username(member.name), member)
@@ -63,13 +50,13 @@ def build_member_index(guild: discord.Guild) -> dict[str, discord.Member]:
 
 
 def find_member(index: dict[str, discord.Member], username: str) -> discord.Member | None:
-    """Find a member by username, ignoring case, extra spaces and a leading '@'."""
+    """Find a member by username, ignoring case, extra spaces and '@' f debut """
     key = normalize_username(username)
     return index.get(key) if key else None
 
 
 def build_role_index(guild: discord.Guild) -> dict[str, discord.Role]:
-    """Map lower-cased role names to roles (the @everyone role is excluded)."""
+    """Map lower-cased role names to roles"""
     return {
         role.name.casefold(): role
         for role in guild.roles
@@ -77,11 +64,11 @@ def build_role_index(guild: discord.Guild) -> dict[str, discord.Role]:
     }
 
 
-# --------------------------------------------------------------------------- #
+
 # Role operations
-# --------------------------------------------------------------------------- #
+
 def check_assignable(role: discord.Role, bot_member: discord.Member) -> str | None:
-    """Return an error message if the bot cannot add/remove ``role``, else None."""
+    """Return an error message if the bot cannot add/remove 'role', else rien"""
     if role.managed:
         return f"Role '{role.name}' is managed by an integration and cannot be assigned."
     if role.position >= bot_member.top_role.position:
@@ -101,12 +88,7 @@ async def apply_role_changes(
     reason: str,
     dry_run: bool = False,
 ) -> tuple[list[str], list[str], list[str]]:
-    """Add/remove roles on one member.
-
-    Returns ``(added_names, removed_names, errors)``. A failure on one role
-    group never raises: it is reported and the other group is still tried.
-    In dry-run mode permissions are still checked but nothing is changed.
-    """
+    """Add/remove roles for one member, return (added, removed, errors)."""
     errors: list[str] = []
     who = member.name
 
@@ -150,9 +132,9 @@ def _names(roles: list[discord.Role]) -> str:
     return ", ".join(r.name for r in roles)
 
 
-# --------------------------------------------------------------------------- #
+
 # Full synchronization
-# --------------------------------------------------------------------------- #
+
 async def sync_members(
     guild: discord.Guild,
     sheet_members: list[dict],
@@ -162,14 +144,11 @@ async def sync_members(
     actor: str = "bot",
     delay: float = DEFAULT_DELAY,
 ) -> SyncReport:
-    """Synchronize ``guild`` members' managed roles with ``sheet_members``.
-
-    ``sheet_members`` is the list returned by ``bot.sheets.load_members()``:
-    ``[{"username": "member1", "roles": ["Developer", ...]}, ...]``.
+    """Synchronize 'guild'members' managed roles with 'sheet_members'.
 
     Members or roles that cannot be found, and permission / API errors, are
     skipped and reported; they never abort the whole run. Roles outside
-    ``managed_role_names`` are never added or removed.
+    'managed_role_names' are never added or removed.
     """
     report = SyncReport(dry_run=dry_run)
     me = guild.me
@@ -244,7 +223,7 @@ async def sync_members(
                 username, added, removed,
             )
         elif errors:
-            pass  # everything for this member failed; already reported
+            pass  # everything for this member failed already reported
         else:
             report.unchanged += 1
 
