@@ -320,6 +320,6 @@ The tests run without a Discord server or Google account (they use fakes). They 
 Built by the Shellmates Club members:
 
 - Benrabah Hamza
-- 
-- 
+- Amir Aya Bouchra
+- Dahane Ilyes
 - 
