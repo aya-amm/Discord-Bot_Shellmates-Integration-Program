@@ -29,8 +29,10 @@ class HRBot(commands.Bot):
 
 
 def main() -> None:
+    config.validate()  # fail fast with a clear message if .env is incomplete
     HRBot().run(config.DISCORD_TOKEN)
 
 
 if __name__ == "__main__":
     main()
+    
